@@ -20,6 +20,14 @@ returns:
     0 on success, otherwise error code
 */
 
+void sendReliable(){
+
+}
+
+void recReliable(){
+
+}
+
 int saveFile(int sockfd, char * buf, struct sockaddr_in * serveraddr, int serverlen){
     bzero(buf, BUFSIZE);
     int n;
@@ -63,32 +71,31 @@ int remotels(){
     return 0;
 }
 
-// int pullFile(int sockfd, char *buf, struct sockaddr_in * serveraddr, int * serverlen){
-//     bzero(buf, BUFSIZE);
-//     buf[0] = '3';
-//     printf("What file would you like to transfer?\n");
-//     fgets(buf + 1, BUFSIZE - 1, stdin);
-//     buf[strlen(buf) - 1] = NULL;
-//     sendto(sockfd, buf, strlen(buf), 0, serveraddr, serverlen);
-//     FILE * fd = fopen(buf + 1, "w");
-//     int n;
-//     while (1) {
-//         bzero(buf, BUFSIZE);
-//         n = n = recvfrom(sockfd, buf, BUFSIZE, 0, serveraddr, serverlen);
-//         if (n < 0){
-//             error("There was some issue getting data from the socket");
-//         }
-//         if (!strlen(buf)){
-//             //fclose(fd);
-//             printf("saving");
-//             break;
-//         }
-//         fwrite(buf, sizeof(char), strlen(buf), fd);
-//         printf(buf);
-//     }
-//     fclose(fd);
-//     return 0;
-// }
+int pullFile(int sockfd, char *buf, struct sockaddr_in * serveraddr, int * serverlen){
+    int n;
+    bzero(buf, BUFSIZE);
+    buf[0] = '3';
+    printf("What file would you like to transfer?\n");
+    fgets(buf + 1, BUFSIZE - 1, stdin);
+    buf[strlen(buf) - 1] = '\0';
+    n = sendto(sockfd, buf, strlen(buf), 0, serveraddr, *serverlen);
+    if (n < 0) 
+    error("Issue sending request");
+    FILE * fd = fopen(buf + 1, "w");
+    while (1) {
+        bzero(buf, BUFSIZE);
+        n  = recvfrom(sockfd, buf, BUFSIZE, 0, serveraddr, serverlen);
+        if (n < 0)
+        error("There was some issue getting data from the socket");
+        if (!strlen(buf)){
+            printf("Saving");
+            break;
+        }
+        fwrite(buf, sizeof(char), strlen(buf), fd);
+    }
+    fclose(fd);
+    return 0;
+}
 
 
 
@@ -163,6 +170,7 @@ int main(int argc, char **argv){
             break;
         case 3:
             /* code */
+            pullFile(sockfd, buf, &serveraddr, &serverlen);
             break;
         case 4:
             /* code */
@@ -170,7 +178,9 @@ int main(int argc, char **argv){
             return(0);
             break;
         default:
+            strcpy(buf, "%d|", 6)
             printf("Please select one of the listed options:");
+            printf(itoa(atoi("ffff")));
             break;
         }
     }
