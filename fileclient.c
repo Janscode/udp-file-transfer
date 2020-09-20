@@ -20,23 +20,32 @@ returns:
     0 on success, otherwise error code
 */
 
-int saveFile(int sockfd, char *buf, struct sockaddr_in * serveraddr, int serverlen){
+int saveFile(int sockfd, char * buf, struct sockaddr_in * serveraddr, int serverlen){
     bzero(buf, BUFSIZE);
+    int n;
     buf[0] = '2';
     printf("What file would you like to transfer?\n");
     fgets(buf + 1, BUFSIZE - 1, stdin);
-    buf[strlen(buf) - 1] = NULL;
+    buf[strlen(buf) - 1] = '\0';
     FILE * fd = fopen(buf + 1, "r");
     if (fd){
-        sendto(sockfd, buf, strlen(buf), 0, serveraddr, serverlen);
+        n = sendto(sockfd, buf, strlen(buf), 0, (struct sockaddr *) serveraddr, serverlen);
+        if (n < 0){
+            perror("Initial send failed");
+        }
         while (fgets(buf, BUFSIZE, fd)){
-            printf(buf);
-            sendto(sockfd, buf, strlen(buf), 0, serveraddr, serverlen);
+            n = sendto(sockfd, buf, strlen(buf), 0, (struct sockaddr *) serveraddr, serverlen);
+            if (n < 0){
+                perror("Packet send failed");
+            }
             bzero(buf, BUFSIZE);
         }
-        /*send completion signal to server*/
-        buf[0] = NULL;
-        sendto(sockfd, buf, 1, 0, serveraddr, serverlen);
+        /*send goodbye to server*/
+        buf[0] = '\0';
+        n = sendto(sockfd, buf, 1, 0, (struct sockaddr *) serveraddr, serverlen);
+        if (n < 0){
+            perror("Final send failed");
+        }
     }
     else{
         error("Unable to open file.");
@@ -150,7 +159,7 @@ int main(int argc, char **argv){
             break;
         case 2:
             /* code */
-            saveFile(sockfd, buf, &serveraddr, &serverlen);
+            saveFile(sockfd, buf, &serveraddr, serverlen);
             break;
         case 3:
             /* code */

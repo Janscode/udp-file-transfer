@@ -16,7 +16,6 @@ void error(char *msg) {
 }
 
 void saveFile(int sockfd, char * buf, struct sockaddr_in * clientaddr, int * clientlen){
-    int writing = 1;
     int n;
     FILE* fd = fopen(buf + 1, "w");
     while (1) {
@@ -132,11 +131,15 @@ int main(int argc, char **argv){
     /*
      * recvfrom: receive a UDP datagram from a client
      */
+    printf("BOO");
     bzero(buf, BUFSIZE);
     n = recvfrom(sockfd, buf, BUFSIZE, 0,
 		 (struct sockaddr *) &clientaddr, &clientlen);
     if (n < 0)
       error("ERROR in recvfrom");
+
+    printf(buf);
+    printf("AHA");
     
     switch (atoi(buf))
     {
@@ -147,6 +150,7 @@ int main(int argc, char **argv){
     
     case 2:
         /* save */
+        printf("here");
         saveFile(sockfd, buf, (struct sockaddr_in *) &clientaddr, &clientlen);
         break;
 
