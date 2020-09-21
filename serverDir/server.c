@@ -25,12 +25,12 @@ void saveFile(int sockfd, char * buf, struct sockaddr_in * clientaddr, int * cli
         if (n < 0){
             error("Issue receiving data during transfer.");
         }
-        if (!strlen(buf)){
+        printf("Bytes: %d", n);
+        if (n < 2){
             fclose(fd);
             break;
         }
-        fwrite(buf, sizeof(char), strlen(buf), fd);
-        printf(buf);
+        fwrite(buf + 1, sizeof(char), n - 1, fd);
     }
 }
 
@@ -42,16 +42,17 @@ void pullFile(int sockfd, char * buf, struct sockaddr_in *clientaddr, int client
     struct hostent *hostp; /* client host info */
     char *hostaddrp; /* dotted decimal host addr string */
     int n;
+    
 
     FILE * fd = fopen(buf + 1, "r");
 
     if (fd){
         /*To do: add response to indicate succesful file open */
         /*data transfer loop*/
-        while (fgets(buf, BUFSIZE, fd)){
+        while ((n = fread(buf + 1, sizeof(char), BUFSIZE - 1, fd)) > 0){
             /*send file line */
-            printf("hi\n");
-            n = sendto(sockfd, buf, strlen(buf), 0, (struct sockaddr *)
+            buf[0] = 0xFF;
+            n = sendto(sockfd, buf, n + 1, 0, (struct sockaddr *)
              clientaddr, clientlen);
             if (n < 0){
                 perror("Packet send failed");
@@ -59,7 +60,7 @@ void pullFile(int sockfd, char * buf, struct sockaddr_in *clientaddr, int client
             bzero(buf, BUFSIZE);
         }
         /*send goodbye to server*/
-        buf[0] = '\0';
+        buf[0] = 0xFF;
         n = sendto(sockfd, buf, 1, 0, (struct sockaddr *)
          clientaddr, clientlen);
         if (n < 0)

@@ -18,53 +18,26 @@ void error(char *msg) {
 void saveFile(int sockfd, char * buf, struct sockaddr_in * clientaddr, int * clientlen){
     int n;
     FILE* fd = fopen(buf + 1, "w");
+    printf("here?");
     while (1) {
+        printf("start");
         bzero(buf, BUFSIZE);
         n = recvfrom(sockfd, buf, BUFSIZE, 0,
 		 clientaddr, clientlen);
         if (n < 0){
             error("There was some issue getting data from the socket");
         }
-        if (!strlen(buf)){
+        if (buf[0] != 0xFF){
+            printf("EarlyClose");
             fclose(fd);
-            printf("saving");
             break;
         }
-        fwrite(buf, sizeof(char), strlen(buf), fd);
-        printf(buf);
+        printf("HERE");
+        fwrite(buf + 1, sizeof(char), n - 1, fd);
     }
 }
 
 
-// void pullFile(int sockfd, char * buf, struct sockaddr_in * clientaddr, int * clientlen){
-//     bzero(buf, BUFSIZE);
-//     n = recvfrom(sockfd, buf, BUFSIZE, 0,
-//         (struct sockaddr *) &clientaddr, &clientlen);
-//     if (n < 0)
-//     error("ERROR in recvfrom");
-//         /* 
-//     * gethostbyaddr: determine who sent the datagram
-//     */
-//     hostp = gethostbyaddr((const char *)&clientaddr.sin_addr.s_addr, 
-//             sizeof(clientaddr.sin_addr.s_addr), AF_INET);
-//     if (hostp == NULL)
-//     error("ERROR on gethostbyaddr");
-//     hostaddrp = inet_ntoa(clientaddr.sin_addr);
-//     if (hostaddrp == NULL)
-//     error("ERROR on inet_ntoa\n");
-//     printf("server received datagram from %s (%s)\n", 
-//     hostp->h_name, hostaddrp);
-//     printf("server received %d/%d bytes: %s\n", strlen(buf), n, buf);
-    
-//     /* 
-//     * sendto: echo the input back to the client 
-//     */
-//     n = sendto(sockfd, buf, strlen(buf), 0, 
-//         (struct sockaddr *) &clientaddr, clientlen);
-//     if (n < 0) 
-//     error("ERROR in sendto");
-// }
-// }
 
 
 
@@ -76,12 +49,11 @@ int main(int argc, char **argv){
     int clientlen; /* byte size of client's address */
     struct sockaddr_in serveraddr; /* server's addr */
     struct sockaddr_in clientaddr; /* client addr */
-    struct hostent *hostp; /* client host info */
     char buf[BUFSIZE]; /* message buf */
-    char *hostaddrp; /* dotted decimal host addr string */
     int optval; /* flag value for setsockopt */
     int n; /* message byte size */
-    
+
+    printf("are you here?");
     /* 
    * check command line arguments 
    */

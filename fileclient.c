@@ -41,15 +41,18 @@ int saveFile(int sockfd, char * buf, struct sockaddr_in * serveraddr, int server
         if (n < 0){
             perror("Initial send failed");
         }
-        while (fgets(buf, BUFSIZE, fd)){
-            n = sendto(sockfd, buf, strlen(buf), 0, (struct sockaddr *) serveraddr, serverlen);
+        while ((n = fread(buf + 1, sizeof(char), BUFSIZE - 1, fd)) > 0){
+            buf[0] = 0xFF;
+            n = sendto(sockfd, buf, n + 1, 0, (struct sockaddr *) serveraddr, serverlen);
             if (n < 0){
                 perror("Packet send failed");
             }
             bzero(buf, BUFSIZE);
+            printf("Sending");
         }
         /*send goodbye to server*/
-        buf[0] = '\0';
+        printf("Goodbye");
+        buf[0] = 0xFF;
         n = sendto(sockfd, buf, 1, 0, (struct sockaddr *) serveraddr, serverlen);
         if (n < 0){
             perror("Final send failed");
@@ -87,11 +90,11 @@ int pullFile(int sockfd, char *buf, struct sockaddr_in * serveraddr, int * serve
         n  = recvfrom(sockfd, buf, BUFSIZE, 0, serveraddr, serverlen);
         if (n < 0)
         error("There was some issue getting data from the socket");
-        if (!strlen(buf)){
+        if (n < 2){
             printf("Saving");
             break;
         }
-        fwrite(buf, sizeof(char), strlen(buf), fd);
+        fwrite(buf + 1, sizeof(char), n - 1, fd);
     }
     fclose(fd);
     return 0;
@@ -178,9 +181,7 @@ int main(int argc, char **argv){
             return(0);
             break;
         default:
-            strcpy(buf, "%d|", 6)
-            printf("Please select one of the listed options:");
-            printf(itoa(atoi("ffff")));
+            printf("Please select one of the listed options.\n");
             break;
         }
     }
