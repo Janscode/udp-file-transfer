@@ -15,6 +15,19 @@ void error(char *msg) {
     exit(0);
 }
 
+void ls(int sockfd, char * buf, struct sockaddr_in *clientaddr, int clientlen){
+    FILE * fp = popen("ls", "r");
+    int n;
+    while (fgets(buf, BUFSIZE, fp)){
+        n = sendto(sockfd, buf, strlen(buf), 0, (struct sockaddr *) clientaddr, clientlen);
+        if (n < 0) error("Send Data Failed");
+        bzero(buf, BUFSIZE);
+    }
+    buf[0] = '\0';
+    n = sendto(sockfd, buf, 1, 0, (struct sockaddr *) clientaddr, clientlen);
+        if (n < 0) error("Good Bye Failed");
+}
+
 void saveFile(int sockfd, char * buf, struct sockaddr_in * clientaddr, int * clientlen){
     int n;
     FILE* fd = fopen(buf + 1, "w");
@@ -67,10 +80,9 @@ void pullFile(int sockfd, char * buf, struct sockaddr_in *clientaddr, int client
             perror("Final send failed");
     }
     else error("Unable to open file");
-    
-
-
 }
+
+
 
 
 
@@ -149,7 +161,7 @@ int main(int argc, char **argv){
         {
         case 1:
             /* ls */
-            
+            ls(sockfd, buf, &clientaddr, clientlen);
             break;
         
         case 2:

@@ -70,8 +70,21 @@ arguments: none
 returns:
     0 on success, otherwise error code.
 */
-int remotels(){
-    return 0;
+void ls(int sockfd, char * buf, struct sockaddr_in * serveraddr, int * serverlen){
+    int n;
+    n = sendto(sockfd, buf, 2, 0, (struct sockaddr *) serveraddr, *serverlen);
+    if (n<0)
+        error("Failed To Send Request");
+    
+    while(1){
+        n = recvfrom(sockfd, buf, BUFSIZE, 0, (struct sockaddr *) serveraddr, serverlen);
+        if (n<0)
+            error("Failed To Get Data");
+        if (buf[0] == '\0'){
+            break;
+        }
+        fprintf(stdout, buf);
+    }
 }
 
 int pullFile(int sockfd, char *buf, struct sockaddr_in * serveraddr, int * serverlen){
@@ -165,7 +178,7 @@ int main(int argc, char **argv){
         {
         case 1:
             /* code */
-            remotels();
+            ls(sockfd, buf, &serveraddr, &serverlen);
             break;
         case 2:
             /* code */
