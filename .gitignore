@@ -1,1 +1,3 @@
 *.o
+Submit/client/client
+Submit/server/server
