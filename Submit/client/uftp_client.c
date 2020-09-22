@@ -28,9 +28,8 @@ void recReliable(){
 
 }
 
-int saveFile(int sockfd, char * buf, struct sockaddr_in * serveraddr, int serverlen){
+int saveFile(int sockfd, char * buf, struct sockaddr_in * serveraddr, unsigned int serverlen){
     int n;
-    printf(buf + 5);
     FILE * fd = fopen(buf + 5, "r");
     
     if (fd){
@@ -56,35 +55,14 @@ int saveFile(int sockfd, char * buf, struct sockaddr_in * serveraddr, int server
     return 0;
 }
 
-/* ls function
-arguments: none
-returns:
-    0 on success, otherwise error code.
-*/
-/* probably uneccisary , maybe replace with "console response" function */ 
-void ls(int sockfd, char * buf, struct sockaddr_in * serveraddr, int * serverlen){
-    int n;
-    while(1){
-        printf("here");
-        n = recvfrom(sockfd, buf, BUFSIZE, 0, (struct sockaddr *) serveraddr, serverlen);
-        if (n<0)
-            error("Failed To Get Data");
-        if (buf[0] == '\0'){
-            break;
-        }
-        fprintf(stdout, buf);
-    }
-    /* probably uneccisary , maybe replace with "console response" function */ 
-}
 
-int pullFile(int sockfd, char *buf, struct sockaddr_in * serveraddr, int * serverlen){
+int pullFile(int sockfd, char *buf, struct sockaddr_in * serveraddr, unsigned int * serverlen){
     int n;
     //buf[strlen(buf)-1] = '\0';
     FILE * fd = fopen(buf + 5, "w");
-    printf("%s",buf);
     while (1) {
         bzero(buf, BUFSIZE);
-        n  = recvfrom(sockfd, buf, BUFSIZE, 0, serveraddr, serverlen);
+        n  = recvfrom(sockfd, buf, BUFSIZE, 0, (struct sockaddr *) serveraddr, serverlen);
         if (n < 0)
         error("There was some issue getting data from the socket");
         if (n < 2){
@@ -101,7 +79,7 @@ int pullFile(int sockfd, char *buf, struct sockaddr_in * serveraddr, int * serve
 int main(int argc, char **argv){
     /*used example code for basic socket usage*/
     int sockfd, portno, n;
-    int serverlen;
+    unsigned int serverlen;
     struct sockaddr_in serveraddr;
     struct hostent *server;
     char *hostname;
@@ -156,6 +134,7 @@ int main(int argc, char **argv){
         if (n<0) 
          error("Send command failed");
         
+        bzero(buf, BUFSIZE);
         n = recvfrom(sockfd, buf, BUFSIZE, 0, (struct sockaddr *) &serveraddr, &serverlen);
         if (n<0) 
          error("Receive response failed");
@@ -164,7 +143,6 @@ int main(int argc, char **argv){
         {
         case '1':
             /* code */
-            ls(sockfd, buf, &serveraddr, &serverlen);
             break;
         case '2':
             /* code */
@@ -173,14 +151,6 @@ int main(int argc, char **argv){
         case '3':
             /* code */
             pullFile(sockfd, buf, &serveraddr, &serverlen);
-            break;
-        case '4':
-            /* file delete*/
-            printf("Bye!\n");
-            return(0);
-            break;
-        case '5':
-            printf("Server shutting down \n");
             break;
         default:
             fprintf(stdout, "\n%s\n", buf + 1);

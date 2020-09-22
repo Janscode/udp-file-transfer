@@ -1,3 +1,7 @@
-Use "make client" to build the client executable adn "make server" to build server executable.
+Usage:
+Type make in either the client or server directory to build the executables. 
+The executables are called client and server, and they are used as specified in the assignment pdf.
 
-I wrote a program that repeatedly sends chunks of data using sendto when reading large files, and I used the first byte of each packet as a sort of header to indicate special occasions such as when the entire file had been read. 
+Implementation:
+My program sends the command with one wasted byte to the server, which then fills that byte to tell the client how to process the rest of the servers response. 
+In the case that a file is being transfered, the fread funciton is used to fill the buffer which is then sent and the fwrite funciton is used to write to a file. The first byte of the buffer is always wasted so that when the transfer is complete a single byte can be sent as an indication that the file can be closed.

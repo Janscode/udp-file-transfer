@@ -15,7 +15,7 @@ void error(char *msg) {
     exit(0);
 }
 
-void ls(int sockfd, char * buf, struct sockaddr_in *clientaddr, int clientlen){
+void ls(int sockfd, char * buf, struct sockaddr_in *clientaddr, unsigned int clientlen){
     int n;
     /*
     buf[0] = '1';
@@ -36,10 +36,24 @@ void ls(int sockfd, char * buf, struct sockaddr_in *clientaddr, int clientlen){
     */
    FILE * fd = popen("ls", "r");
    n = fread(buf + 1, sizeof(char), BUFSIZE - 1, fd);
-   sendto(sockfd, buf, n + 1, 0, (struct sockaddr *) clientaddr, clientlen);
+   n = sendto(sockfd, buf, n + 1, 0, (struct sockaddr *) clientaddr, clientlen);
+   if (n < 0)
+    error("Issue with ls response");
 }
 
-void saveFile(int sockfd, char * buf, struct sockaddr_in * clientaddr, int * clientlen){
+void delete(int sockfd, char * buf, struct sockaddr_in *clientaddr, unsigned int clientlen){
+    int n;
+    char command[120];
+    strcpy(command, "rm ");
+    strcpy(command + 3, buf + 8);
+    n = system(command);
+    strcpy(buf + 1, "File Deleted\n");
+    n = sendto(sockfd, buf, 14, 0, (struct sockaddr *) clientaddr, clientlen);
+    if (n < 0)
+    error("Issue with delete response");
+}
+
+void saveFile(int sockfd, char * buf, struct sockaddr_in * clientaddr, unsigned int * clientlen){
     int n;
     //buf[strlen(buf) - 1] = '\0';
     FILE* fd = fopen(buf + 5, "w");
@@ -51,7 +65,7 @@ void saveFile(int sockfd, char * buf, struct sockaddr_in * clientaddr, int * cli
     
     while (1) {
         bzero(buf, BUFSIZE);
-        n = recvfrom(sockfd, buf, BUFSIZE, 0,
+        n = recvfrom(sockfd, buf, BUFSIZE, 0, (struct sockaddr *)
 		 clientaddr, clientlen);
         if (n < 0){
             error("Issue receiving data during transfer.");
@@ -65,7 +79,7 @@ void saveFile(int sockfd, char * buf, struct sockaddr_in * clientaddr, int * cli
 }
 
 
-void pullFile(int sockfd, char * buf, struct sockaddr_in *clientaddr, int * clientlen){
+void pullFile(int sockfd, char * buf, struct sockaddr_in *clientaddr, unsigned int * clientlen){
         /* 
     * gethostbyaddr: determine who sent the datagram
     */
@@ -78,7 +92,6 @@ void pullFile(int sockfd, char * buf, struct sockaddr_in *clientaddr, int * clie
     if (fd){
         
         buf[0] = '3';
-        printf("%s\n", buf);
         n = sendto(sockfd, buf, strlen(buf), 0, (struct sockaddr *)
          clientaddr, *clientlen);
         if (n < 0)
@@ -121,7 +134,7 @@ void pullFile(int sockfd, char * buf, struct sockaddr_in *clientaddr, int * clie
 int main(int argc, char **argv){
     int sockfd; /* socket */
     int portno; /* port to listen on */
-    int clientlen; /* byte size of client's address */
+    unsigned int clientlen; /* byte size of client's address */
     struct sockaddr_in serveraddr; /* server's addr */
     struct sockaddr_in clientaddr; /* client addr */
     
@@ -196,6 +209,7 @@ int main(int argc, char **argv){
 
         else if (n > 8 && !strncmp(buf + 1, "delete ", 7)){
             /* delete file */
+            delete(sockfd, buf, &clientaddr, clientlen); /* as currently written this option might be really really dangerous , potentially could let a user get a shell*/
         }
 
         else if (n == 3 && !strncmp(buf + 1, "ls", 2)){
