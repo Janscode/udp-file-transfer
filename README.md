@@ -1,3 +1,2 @@
 # udp-file-transfer
-testing
-123
+This is a file transfer program using udp sockets in c.
